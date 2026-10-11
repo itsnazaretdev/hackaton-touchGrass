@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Field Diary</title>
+  <style>
+    :root {
+      /* Leaf, sage and butter: the colors of an autumn walk */
+      --leaf: #f5f8f1;
+      --sage: #e1ecdc;
+      --sage-line: rgba(38, 51, 43, 0.14);
+      --butter: #f4df8e;
+      --paper: #fbf3cf;
+      --ink: #26332b;
+      --ink-soft: #566a5d;
+      --border: #c9d9c3;
+      --error: #8f2f2f;
+      --error-bg: #f6dcd8;
+
+      --font-text: "Nunito Sans", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+      --font-notes: "Cascadia Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --leaf: #1c251f;
+        --sage: #2a382f;
+        --sage-line: rgba(232, 239, 229, 0.12);
+        --butter: #e9d27a;
+        --paper: #343520;
+        --ink: #e8efe5;
+        --ink-soft: #a5b8aa;
+        --border: #3b4d41;
+        --error: #f0b8b0;
+        --error-bg: #4a2a27;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--leaf);
+      color: var(--ink);
+      font-family: var(--font-text);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 34rem;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.25rem, 10vw, 3.25rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .lead {
+      margin: 0.75rem 0 0;
+      color: var(--ink-soft);
+      max-width: 28rem;
+    }
+
+    h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    /* --- Form -------------------------------------------------------- */
+
+    form { margin-top: 2rem; }
+
+    label {
+      display: block;
+      margin: 0 0 0.375rem;
+      font-weight: 700;
+    }
+
+    .field { margin-bottom: 1.25rem; }
+
+    .hint {
+      display: block;
+      margin-top: 0.375rem;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      border: 2px solid transparent;
+      border-radius: 14px;
+      background: var(--sage);
+      color: var(--ink);
+      font: inherit;
+      /* At least 16px, so iOS doesn't zoom in when the field is focused */
+      font-size: 1rem;
+    }
+
+    input[type="text"] { padding: 0.8rem 1rem; }
+
+    /* Notes are raw: monospace on ruled paper */
+    textarea {
+      display: block;
+      min-height: 11rem;
+      resize: none;
+      padding: 0.875rem 1rem;
+      font-family: var(--font-notes);
+      font-size: 0.95rem;
+      line-height: 1.75rem;
+      background-image: repeating-linear-gradient(
+        transparent 0,
+        transparent calc(1.75rem - 1px),
+        var(--sage-line) calc(1.75rem - 1px),
+        var(--sage-line) 1.75rem
+      );
+      background-origin: content-box;
+      background-attachment: local;
+    }
+
+    ::placeholder { color: var(--ink-soft); opacity: 0.8; }
+
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible,
+    button:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--ink);
+      outline-offset: 2px;
+    }
+
+    button {
+      width: 100%;
+      min-height: 3.5rem;
+      border: 2px solid var(--ink);
+      border-radius: 14px;
+      background: var(--butter);
+      color: #26332b;
+      font: inherit;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { opacity: 0.65; cursor: progress; }
+
+    /* --- Status ------------------------------------------------------ */
+
+    .status {
+      margin: 1rem 0 0;
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      background: var(--sage);
+      white-space: pre-line;
+    }
+
+    .status[hidden] { display: none; }
+
+    .status.error {
+      background: var(--error-bg);
+      color: var(--error);
+      font-weight: 600;
+    }
+
+    .writing::before {
+      content: "";
+      display: inline-block;
+      width: 0.6rem;
+      height: 0.6rem;
+      margin-right: 0.6rem;
+      border-radius: 50%;
+      background: var(--ink);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.25; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .writing::before { animation: none; }
+    }
+
+    /* --- Written entry ----------------------------------------------- */
+
+    .entry {
+      margin-top: 2rem;
+      padding: 1.5rem 1.25rem;
+      border-radius: 20px;
+      background: var(--paper);
+    }
+
+    .entry[hidden] { display: none; }
+
+    .entry h2 { font-size: 1.3rem; margin-bottom: 0.15rem; }
+
+    .meta {
+      margin: 0 0 1rem;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    .text p {
+      margin: 0 0 1rem;
+      font-size: 1.125rem;
+      line-height: 1.75;
+      max-width: 60ch;
+    }
+
+    .text p:last-child { margin-bottom: 0; }
+
+    .source-notes {
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--sage-line);
+    }
+
+    .source-notes pre {
+      margin: 0.75rem 0 0;
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      background: var(--sage);
+      font-family: var(--font-notes);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      padding: 0.25rem 0;
+    }
+
+    /* --- Previous entries -------------------------------------------- */
+
+    .history { margin-top: 3rem; }
+
+    .history details { border-bottom: 1px solid var(--border); }
+
+    .history summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.9rem 0;
+    }
+
+    .history summary span:last-child {
+      flex-shrink: 0;
+      color: var(--ink-soft);
+      font-weight: 400;
+    }
+
+    .history .text { padding-bottom: 1rem; }
+
+    .empty { margin: 0; color: var(--ink-soft); }
+
+    /* --- Footer ------------------------------------------------------ */
+
+    footer {
+      margin-top: 3rem;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    footer select {
+      width: auto;
+      min-width: 10rem;
+      margin-top: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+    }
+
+    footer p { margin: 0.75rem 0 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Field Diary</h1>
+      <p class="lead">Jot down what you notice while you walk. When you get home, a model running on your computer writes the entry.</p>
+    </header>
+
+    <form id="form" autocomplete="off">
+      <div class="field">
+        <label for="place">Place</label>
+        <input id="place" type="text" maxlength="80" placeholder="Riverside trail">
+      </div>
+
+      <div class="field">
+        <label for="notes">Notes</label>
+        <textarea id="notes" rows="6" maxlength="4000" placeholder="yellow leaves all over the ground&#10;smelled of wet earth&#10;a blue tit on a low branch"></textarea>
+        <span class="hint">One idea per line, in any language. Smells, sounds and how you felt work better than long sentences.</span>
+      </div>
+
+      <button id="write" type="submit">Write entry</button>
+      <p id="status" class="status" role="status" aria-live="polite" hidden></p>
+    </form>
+
+    <section id="entry" class="entry" aria-labelledby="entry-title" hidden>
+      <h2 id="entry-title"></h2>
+      <p id="entry-meta" class="meta"></p>
+      <div id="entry-text" class="text"></div>
+      <details class="source-notes">
+        <summary>My notes</summary>
+        <pre id="entry-notes"></pre>
+      </details>
+    </section>
+
+    <section class="history" aria-labelledby="history-title">
+      <h2 id="history-title">Previous entries</h2>
+      <div id="history"></div>
+    </section>
+
+    <footer>
+      <label for="model">Model</label>
+      <select id="model"></select>
+      <p>Everything stays on this computer: your notes and entries never leave it.</p>
+    </footer>
+  </main>
+
+  <script>
+    const $ = (selector) => document.querySelector(selector);
+    const place = $('#place');
+    const notes = $('#notes');
+    const model = $('#model');
+    const writeButton = $('#write');
+    const status = $('#status');
+    const DRAFT_KEY = 'field-diary:draft';
+
+    // --- Draft: what you jot down survives closing the tab ---------------
+    function saveDraft() {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ place: place.value, notes: notes.value }));
+      } catch (_) { /* no storage available: the page still works */ }
+    }
+
+    function loadDraft() {
+      try {
+        const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+        if (draft) {
+          place.value = draft.place || '';
+          notes.value = draft.notes || '';
+        }
+      } catch (_) { /* nothing to restore */ }
+    }
+
+    function fitHeight() {
+      notes.style.height = 'auto';
+      notes.style.height = notes.scrollHeight + 'px';
+    }
+
+    // --- Messages --------------------------------------------------------
+    function showStatus(text, kind) {
+      status.textContent = text;
+      status.className = 'status' + (kind ? ' ' + kind : '');
+      status.hidden = false;
+    }
+
+    function hideStatus() {
+      status.hidden = true;
+    }
+
+    // --- Render text without HTML: what the model writes is never interpreted
+    function renderParagraphs(container, text) {
+      container.replaceChildren();
+      text.split(/\n{2,}/).forEach((block) => {
+        const clean = block.trim();
+        if (!clean) return;
+        const p = document.createElement('p');
+        p.textContent = clean;
+        container.append(p);
+      });
+    }
+
+    function longDate(iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      if (!y || !m || !d) return iso;
+      return new Date(y, m - 1, d).toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'long', year: 'numeric',
+      });
+    }
+
+    // --- Installed models ------------------------------------------------
+    async function loadModels() {
+      let info = { models: [], suggested: [], default: 'gemma3:4b', ollama: false };
+      try {
+        info = await (await fetch('/api/models')).json();
+      } catch (_) { /* the default model is used */ }
+
+      // Installed models first, then the suggested ones that still need downloading.
+      const missing = [info.default, ...(info.suggested || [])]
+        .filter((name, i, all) => all.indexOf(name) === i && !info.models.includes(name));
+      const options = [
+        ...info.models.map((name) => new Option(name, name)),
+        ...missing.map((name) => new Option(name + (info.ollama ? ' (not downloaded)' : ''), name)),
+      ];
+      model.replaceChildren(...options);
+      model.value = info.default;
+
+      if (!info.ollama) {
+        showStatus('Ollama is not responding. Open it before writing the entry.', 'error');
+      }
+    }
+
+    // --- Previous entries ------------------------------------------------
+    async function loadHistory() {
+      const box = $('#history');
+      let entries = [];
+      try {
+        entries = (await (await fetch('/api/entries')).json()).entries || [];
+      } catch (_) { /* shown as empty */ }
+
+      box.replaceChildren();
+      if (!entries.length) {
+        const empty = document.createElement('p');
+        empty.className = 'empty';
+        empty.textContent = 'No entries yet. Write the first one when you get back from your next outing.';
+        box.append(empty);
+        return;
+      }
+
+      entries.forEach((entry) => {
+        const details = document.createElement('details');
+        const summary = document.createElement('summary');
+        const title = document.createElement('span');
+        const date = document.createElement('span');
+        const text = document.createElement('div');
+        title.textContent = entry.title;
+        date.textContent = longDate(entry.date);
+        text.className = 'text';
+        renderParagraphs(text, entry.body);
+        summary.append(title, date);
+        details.append(summary, text);
+        box.append(details);
+      });
+    }
+
+    // --- Write the entry -------------------------------------------------
+    $('#form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const notesText = notes.value.trim();
+      if (!notesText) {
+        showStatus('Add at least one note before writing the entry.', 'error');
+        notes.focus();
+        return;
+      }
+
+      writeButton.disabled = true;
+      writeButton.textContent = 'Writing entry';
+      showStatus('The model is writing. The first time can take a minute.', 'writing');
+
+      try {
+        const response = await fetch('/api/write', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes: notesText, place: place.value, model: model.value }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Couldn't write the entry.");
+
+        const entry = data.entry;
+        $('#entry-title').textContent = entry.title;
+        $('#entry-meta').textContent = longDate(entry.date) + ', written with ' + entry.model;
+        renderParagraphs($('#entry-text'), entry.body);
+        $('#entry-notes').textContent = notesText;
+        $('#entry').hidden = false;
+        $('#entry').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        showStatus('Entry saved in entries/' + entry.file);
+        loadHistory();
+      } catch (error) {
+        const offline = error instanceof TypeError;
+        showStatus(offline
+          ? "Can't reach the diary server. Check that web.py is still running."
+          : error.message, 'error');
+      } finally {
+        writeButton.disabled = false;
+        writeButton.textContent = 'Write entry';
+      }
+    });
+
+    [place, notes].forEach((field) => field.addEventListener('input', () => {
+      saveDraft();
+      hideStatus();
+    }));
+    notes.addEventListener('input', fitHeight);
+
+    loadDraft();
+    fitHeight();
+    loadModels();
+    loadHistory();
+  </script>
+</body>
+</html>
