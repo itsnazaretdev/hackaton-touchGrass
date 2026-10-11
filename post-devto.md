@@ -20,7 +20,9 @@ Outdoors I only use my Xiaomi's notes app. At home I paste the notes into the pa
 
 ## Demo
 
--Here I have to upload the demo
+{% embed https://youtu.be/t_7lboKqb68 %}
+
+[Watch the demo on YouTube](https://youtu.be/t_7lboKqb68)
 
 The notes can be in any language; the entries come out in English. I jot mine down in Spanish.
 
